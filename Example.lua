@@ -3,8 +3,8 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/XeFro
 
 -- Create Main Window
 local Window = Library:Window({
-    Title = "x2zu [ Stellar ]",
-    Desc = "x2zu on top",
+    Title = "Frxser Hub",
+    Desc = "Frxser Hub on top",
     Icon = 105059922903197,
     Theme = "Dark",
     Config = {
@@ -13,7 +13,7 @@ local Window = Library:Window({
     },
     CloseUIButton = {
         Enabled = true,
-        Text = "x2zu"
+        Text = "Frxser Hub"
     }
 })
 
@@ -137,7 +137,7 @@ local Extra = Window:Tab({Title = "Settings", Icon = "wrench"}) do
 end
 -- Final Notification
 Window:Notify({
-    Title = "x2zu",
-    Desc = "All components loaded successfully! Credits leak: @x2zu",
+    Title = "Frxser Hub",
+    Desc = "All components loaded successfully! Credits leak: @Frxser Hub",
     Time = 4
 })
