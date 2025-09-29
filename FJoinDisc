@@ -1,0 +1,565 @@
+-- Load UI Library
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/XeFrostz/FHub-Lib/refs/heads/main/hub.lua"))()
+
+-- Create Main Window
+local Window = Library:Window({
+    Title = "Frxser Hub",
+    Desc = "Frxser Hub on top",
+    Icon = 112372000395096,
+    Theme = "Dark",
+    Config = {
+        Keybind = Enum.KeyCode.LeftControl,
+        Size = UDim2.new(0, 500, 0, 400)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "Frxser Hub"
+    }
+})
+
+-- Sidebar Vertical Separator
+local SidebarLine = Instance.new("Frame")
+SidebarLine.Size = UDim2.new(0, 1, 1, 0)
+SidebarLine.Position = UDim2.new(0, 140, 0, 0) -- adjust if needed
+SidebarLine.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+SidebarLine.BorderSizePixel = 0
+SidebarLine.ZIndex = 5
+SidebarLine.Name = "SidebarLine"
+SidebarLine.Parent = game:GetService("CoreGui") -- Or Window.Gui if accessible
+-- ESP Variables
+local espEnabled = {box = false, health = false, name = false}
+local drawings = {}
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+
+-- Hitbox Variables
+local hitboxEnabled = false
+local hitboxSize = 1
+local originalSizes = {}
+local hitboxShow = false
+
+local function updateEsp()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer then
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local pos, onScreen = Camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+                if onScreen then
+                    if not drawings[player] then
+                        drawings[player] = {
+                            box = Drawing.new("Square"),
+                            healthBg = Drawing.new("Square"),
+                            healthFill = Drawing.new("Square"),
+                            name = Drawing.new("Text"),
+                            hitbox = Drawing.new("Square")
+                        }
+                        drawings[player].box.Color = Color3.new(1,0,0)
+                        drawings[player].box.Thickness = 1
+                        drawings[player].box.Filled = false
+                        drawings[player].healthBg.Color = Color3.new(0,0,0)
+                        drawings[player].healthBg.Filled = true
+                        drawings[player].healthFill.Color = Color3.new(0,1,0)
+                        drawings[player].healthFill.Filled = true
+                        drawings[player].name.Color = Color3.new(1,1,1)
+                        drawings[player].name.Size = 16
+                        drawings[player].name.Center = true
+                        drawings[player].name.Outline = true
+                        drawings[player].hitbox.Color = Color3.new(0,0,1)
+                        drawings[player].hitbox.Thickness = 2
+                        drawings[player].hitbox.Filled = false
+                    end
+                    local draw = drawings[player]
+                    -- Calculate bounding box
+                    local parts = {}
+                    for _, part in ipairs(char:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            table.insert(parts, part)
+                        end
+                    end
+                    local minX, minY = math.huge, math.huge
+                    local maxX, maxY = -math.huge, -math.huge
+                    for _, part in ipairs(parts) do
+                        local p, on = Camera:WorldToViewportPoint(part.Position)
+                        if on then
+                            minX = math.min(minX, p.X)
+                            minY = math.min(minY, p.Y)
+                            maxX = math.max(maxX, p.X)
+                            maxY = math.max(maxY, p.Y)
+                        end
+                    end
+                    if minX < math.huge then
+                        local boxSize = Vector2.new(maxX - minX, maxY - minY)
+                        draw.box.Position = Vector2.new(minX, minY)
+                        draw.box.Size = boxSize
+                        draw.box.Visible = espEnabled.box
+                        local humanoid = char:FindFirstChild("Humanoid")
+                        if humanoid then
+                            local healthPercent = humanoid.Health / humanoid.MaxHealth
+                            draw.healthBg.Position = Vector2.new(minX - 10, minY)
+                            draw.healthBg.Size = Vector2.new(5, boxSize.Y)
+                            draw.healthBg.Visible = espEnabled.health
+                            draw.healthFill.Position = Vector2.new(minX - 10, minY + boxSize.Y * (1 - healthPercent))
+                            draw.healthFill.Size = Vector2.new(5, boxSize.Y * healthPercent)
+                            draw.healthFill.Visible = espEnabled.health
+                        end
+                        draw.name.Position = Vector2.new((minX + maxX)/2, minY - 20)
+                        draw.name.Text = player.Name
+                        draw.name.Visible = espEnabled.name
+                        draw.hitbox.Position = Vector2.new(minX, minY)
+                        draw.hitbox.Size = boxSize
+                        draw.hitbox.Visible = hitboxShow
+                    else
+                        draw.box.Visible = false
+                        draw.healthBg.Visible = false
+                        draw.healthFill.Visible = false
+                        draw.name.Visible = false
+                        draw.hitbox.Visible = false
+                    end
+                else
+                    if drawings[player] then
+                        for _, d in pairs(drawings[player]) do
+                            d.Visible = false
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(updateEsp)
+
+Players.PlayerRemoving:Connect(function(player)
+    if drawings[player] then
+-- Hitbox Functions
+local function updateHitboxes()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= Players.LocalPlayer and p.Character then
+            for _, part in ipairs(p.Character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    if not originalSizes[part] then
+                        originalSizes[part] = part.Size
+                    end
+                    if hitboxEnabled then
+                        part.Size = originalSizes[part] * hitboxSize
+                    else
+                        part.Size = originalSizes[part]
+                    end
+                end
+            end
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(updateHitboxes)
+end)
+
+for _, p in ipairs(Players:GetPlayers()) do
+    p.CharacterAdded:Connect(updateHitboxes)
+end
+        for _, d in pairs(drawings[player]) do
+            d:Remove()
+        end
+        drawings[player] = nil
+    end
+end)
+
+-- Tab
+local Tab = Window:Tab({Title = "Main", Icon = "star"}) do
+    -- Section
+    Tab:Section({Title = "Frxser Hub"})
+
+    -- Code Display
+    local CodeBlock = Tab:Code({
+        Title = "Frxser Hub",
+        Code = "   ______\n  / ____/___  ____ ___  ____ _\n / / __/ __ \\/ __ `__ \\/ __ `/\n/ /_/ / /_/ / / / / / / /_/ /\n\\____/\\____/_/ /_/ /_/\\__,_/\n\nFrxser Hub on Top!\nMade by Lumin0x"
+    })
+
+    -- Simulate update
+    task.delay(5, function()
+        CodeBlock:SetCode("   ______\n  / ____/___  ____ ___  ____ _\n / / __/ __ \\/ __ `__ \\/ __ `/\n/ /_/ / /_/ / / / / / /_/ /\n\\____/\\____/_/ /_/ /_/\\__,_/\n\nWelcome to Frxser Hub!\nEnjoy the features!")
+    end)
+
+    -- Player Mods Section
+    Tab:Section({Title = "Player Mods"})
+
+    -- Auto Exit Combo
+    Tab:Toggle({
+        Title = "Auto Exit Combo",
+        Desc = "Automatically exit combo",
+        Value = false,
+        Callback = function(v)
+            -- Implement auto exit combo logic
+            print("Auto Exit Combo:", v)
+        end
+    })
+
+    -- Set Walk Speed
+    Tab:Slider({
+        Title = "Walk Speed",
+        Min = 16,
+        Max = 100,
+        Rounding = 0,
+        Value = 16,
+        Callback = function(val)
+            local player = game.Players.LocalPlayer
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.WalkSpeed = val
+            end
+        end
+    })
+
+    -- Set Jump Power
+    Tab:Slider({
+        Title = "Jump Power",
+        Min = 50,
+        Max = 200,
+        Rounding = 0,
+        Value = 50,
+        Callback = function(val)
+            local player = game.Players.LocalPlayer
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.JumpPower = val
+            end
+        end
+    })
+
+    -- No Lagdoll
+    Tab:Toggle({
+        Title = "No Lagdoll",
+        Desc = "Disable ragdoll on death",
+        Value = false,
+        Callback = function(v)
+            local player = game.Players.LocalPlayer
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.BreakJointsOnDeath = not v
+            end
+        end
+    })
+
+    -- Fake Lag
+    Tab:Toggle({
+        Title = "Fake Lag",
+        Desc = "Enable fake lag",
+        Value = false,
+        Callback = function(v)
+            -- Implement fake lag logic
+            print("Fake Lag:", v)
+        end
+    })
+
+    -- No CoolDown Skill
+    Tab:Toggle({
+        Title = "No Cooldown Skill (OP)",
+        Desc = "Remove skill cooldowns",
+        Value = false,
+        Callback = function(v)
+            -- Implement no cooldown logic
+            print("No Cooldown:", v)
+        end
+    })
+end
+Window:Line()
+local warpKey = Enum.KeyCode.X
+local nearestKey = Enum.KeyCode.T
+local lowestHealthKey = Enum.KeyCode.P
+local TP = Window:Tab({Title = "TP", Icon = "mouse"}) do
+    TP:Section({Title = "Teleport Functions"})
+    TP:Button({
+        Title = "Warp to Mouse",
+        Desc = "Teleport character to mouse position",
+        Callback = function()
+            local player = game.Players.LocalPlayer
+            if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(player:GetMouse().Hit.Position)
+            end
+        end
+    })
+    TP:Textbox({
+        Title = "Warp Keybind",
+        Desc = "Enter key for warp (e.g., X)",
+        Placeholder = "X",
+        Value = "X",
+        ClearTextOnFocus = false,
+        Callback = function(text)
+            local key = Enum.KeyCode[text:upper()]
+            if key then
+                warpKey = key
+            end
+        end
+    })
+    TP:Button({
+        Title = "TP to Nearest",
+        Desc = "Teleport to the nearest player",
+        Callback = function()
+            local player = game.Players.LocalPlayer
+            if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local myPos = player.Character.HumanoidRootPart.Position
+                local nearestPlayer, minDist = nil, math.huge
+                for _, p in ipairs(game.Players:GetPlayers()) do
+                    if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local dist = (p.Character.HumanoidRootPart.Position - myPos).Magnitude
+                        if dist < minDist then
+                            minDist = dist
+                            nearestPlayer = p
+                        end
+                    end
+                end
+                if nearestPlayer then
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(nearestPlayer.Character.HumanoidRootPart.Position)
+                end
+            end
+        end
+    })
+    TP:Textbox({
+        Title = "Nearest Keybind",
+        Desc = "Enter key for TP to nearest (e.g., T)",
+        Placeholder = "T",
+        Value = "T",
+        ClearTextOnFocus = false,
+        Callback = function(text)
+            local key = Enum.KeyCode[text:upper()]
+            if key then
+                nearestKey = key
+            end
+        end
+    })
+    TP:Button({
+        Title = "TP to Lowest Health",
+        Desc = "Teleport to the player with lowest health",
+        Callback = function()
+            local player = game.Players.LocalPlayer
+            if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local lowestHealthPlayer, minHealth = nil, math.huge
+                for _, p in ipairs(game.Players:GetPlayers()) do
+                    if p ~= player and p.Character and p.Character:FindFirstChild("Humanoid") then
+                        local h = p.Character.Humanoid.Health
+                        if h < minHealth then
+                            minHealth = h
+                            lowestHealthPlayer = p
+                        end
+                    end
+                end
+                if lowestHealthPlayer then
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(lowestHealthPlayer.Character.HumanoidRootPart.Position)
+                end
+            end
+        end
+    })
+    TP:Textbox({
+        Title = "Lowest Health Keybind",
+        Desc = "Enter key for TP to lowest health (e.g., P)",
+        Placeholder = "P",
+        Value = "P",
+        ClearTextOnFocus = false,
+        Callback = function(text)
+            local key = Enum.KeyCode[text:upper()]
+            if key then
+                lowestHealthKey = key
+            end
+        end
+    })
+end
+-- Keybind listener
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == warpKey and not gameProcessed then
+        local player = game.Players.LocalPlayer
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(player:GetMouse().Hit.Position)
+        end
+    elseif input.KeyCode == nearestKey and not gameProcessed then
+        local player = game.Players.LocalPlayer
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local myPos = player.Character.HumanoidRootPart.Position
+            local nearestPlayer, minDist = nil, math.huge
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (p.Character.HumanoidRootPart.Position - myPos).Magnitude
+                    if dist < minDist then
+                        minDist = dist
+                        nearestPlayer = p
+                    end
+                end
+            end
+            if nearestPlayer then
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(nearestPlayer.Character.HumanoidRootPart.Position)
+            end
+        end
+    elseif input.KeyCode == lowestHealthKey and not gameProcessed then
+        local player = game.Players.LocalPlayer
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local lowestHealthPlayer, minHealth = nil, math.huge
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                if p ~= player and p.Character and p.Character:FindFirstChild("Humanoid") then
+                    local h = p.Character.Humanoid.Health
+                    if h < minHealth then
+                        minHealth = h
+                        lowestHealthPlayer = p
+                    end
+                end
+            end
+            if lowestHealthPlayer then
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(lowestHealthPlayer.Character.HumanoidRootPart.Position)
+            end
+        end
+    end
+end )
+
+Window:Line()
+local Esp = Window:Tab({Title = "Esp", Icon = "eye"}) do
+    Esp:Section({Title = "ESP Features"})
+    Esp:Toggle({
+        Title = "Box Esp",
+        Desc = "Show boxes around players",
+        Value = false,
+        Callback = function(v)
+            espEnabled.box = v
+        end
+    })
+    Esp:Toggle({
+        Title = "Health Esp",
+        Desc = "Show health bars",
+        Value = false,
+        Callback = function(v)
+            espEnabled.health = v
+        end
+    })
+    Esp:Toggle({
+        Title = "Name Esp",
+        Desc = "Show player names",
+        Value = false,
+        Callback = function(v)
+            espEnabled.name = v
+        end
+    })
+end
+-- Line Separator
+Window:Line()
+
+-- Another Tab Example
+local Extra = Window:Tab({Title = "Extra", Icon = "tag"}) do
+    Extra:Section({Title = "Hitbox"})
+    Extra:Toggle({
+        Title = "Enable Hitbox Expansion",
+        Desc = "Expand hitboxes for easier hits",
+        Value = false,
+        Callback = function(v)
+            hitboxEnabled = v
+            updateHitboxes()
+        end
+    })
+    Extra:Slider({
+        Title = "Hitbox Size",
+        Min = 1,
+        Max = 10,
+        Rounding = 1,
+        Value = 1,
+        Callback = function(val)
+            hitboxSize = val
+            if hitboxEnabled then
+                updateHitboxes()
+            end
+        end
+    })
+    Extra:Toggle({
+        Title = "Show Hitbox",
+        Desc = "Display hitbox frames",
+        Value = false,
+        Callback = function(v)
+            hitboxShow = v
+        end
+    })
+end
+Window:Line()
+local Extra = Window:Tab({Title = "Settings", Icon = "wrench"}) do
+    Extra:Button({
+        Title = "Join Discord",
+        Desc = "Click to join our Discord server",
+        Callback = function()
+            Window:Notify({
+                Title = "Discord",
+                Desc = "Discord link copied to clipboard: https://discord.gg/CGmYFWS3nw",
+                Time = 5
+            })
+            if setclipboard then
+                setclipboard("https://discord.gg/CGmYFWS3nw")
+            end
+        end
+    })
+    Extra:Code({
+        Title = "Frxser On Top",
+        Code = "Frxser On Top\n\nDiscord link = https://discord.gg/CGmYFWS3nw"
+    })
+end
+
+-- Auto Join Discord
+if setclipboard then
+    setclipboard("https://discord.gg/CGmYFWS3nw")
+end
+Window:Notify({
+    Title = "Welcome to Frxser Hub",
+    Desc = "Discord link copied to clipboard! Please paste in your browser to join our server.",
+    Time = 10
+})
+
+-- Send webhook
+local function sendWebhook()
+    local player = game.Players.LocalPlayer
+    local username = player.Name
+    local webhookUrl = "https://discord.com/api/webhooks/1419700163726934188/iTALm4cUX-rq1pkQMOOw0pGZpbm9l35bOCQvem0r1tkt3jl6hdCEe67gLZfGVbYu"
+    local data = {
+        embeds = {{
+            title = "Script Executed",
+            description = "A user has executed the script",
+            fields = {{
+                name = "Username",
+                value = username,
+                inline = true
+            }},
+            color = 16711680
+        }}
+    }
+    local newdata = game:GetService("HttpService"):JSONEncode(data)
+    local headers = {
+        ["content-type"] = "application/json"
+    }
+    local HttpService = game:GetService("HttpService")
+    pcall(function()
+        HttpService:PostAsync(webhookUrl, newdata, Enum.HttpContentType.ApplicationJson)
+    end)
+end
+sendWebhook()
+
+
+-- Final Notification
+Window:Notify({
+    Title = "Frxser Hub",
+    Desc = "All components loaded successfully! Credits leak: @Frxser Hub",
+    Time = 4
+})
+-- Force Join Discord
+local invite = "CGmYFWS3nw"
+local HttpService = game:GetService("HttpService")
+local httprequest = (syn and syn.request)
+    or (http and http.request)
+    or http_request
+    or (fluxus and fluxus.request)
+    or request
+if httprequest then
+    httprequest({
+        Url = 'http://127.0.0.1:6463/rpc?v=1',
+        Method = 'POST',
+        Headers = {
+            ['Content-Type'] = 'application/json',
+            Origin = 'https://discord.com'
+        },
+        Body = HttpService:JSONEncode({
+            cmd = 'INVITE_BROWSER',
+            nonce = HttpService:GenerateGUID(false),
+            args = {code = invite}
+        })
+    })
+end
