@@ -218,21 +218,23 @@ do
 				}
 			end
 		end
-		if type(i) == 'string' and not i:find('rbxassetid://') then
-			return {
-				Image = "rbxassetid://".. i,
-				ImageRectSize = Vector2.new(0, 0),
-				ImageRectPosition = Vector2.new(0, 0),
-			}
+		if type(i) == 'string' then
+			if i:find('rbxassetid://') or i:find('https://') or i:find('http://') then
+				return {
+					Image = i,
+					ImageRectSize = Vector2.new(0, 0),
+					ImageRectPosition = Vector2.new(0, 0),
+				}
+			else
+				return {
+					Image = "rbxassetid://".. i,
+					ImageRectSize = Vector2.new(0, 0),
+					ImageRectPosition = Vector2.new(0, 0),
+				}
+			end
 		elseif type(i) == 'number' then
 			return {
 				Image = "rbxassetid://".. i,
-				ImageRectSize = Vector2.new(0, 0),
-				ImageRectPosition = Vector2.new(0, 0),
-			}
-		elseif type(i) == 'string' and i:find('rbxassetid://') then
-			return {
-				Image = i,
 				ImageRectSize = Vector2.new(0, 0),
 				ImageRectPosition = Vector2.new(0, 0),
 			}
