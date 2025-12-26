@@ -230,6 +230,12 @@ do
 				ImageRectSize = Vector2.new(0, 0),
 				ImageRectPosition = Vector2.new(0, 0),
 			}
+		elseif type(i) == 'string' and i:find('rbxassetid://') then
+			return {
+				Image = i,
+				ImageRectSize = Vector2.new(0, 0),
+				ImageRectPosition = Vector2.new(0, 0),
+			}
 		else
 			return i
 		end
