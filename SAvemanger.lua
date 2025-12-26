@@ -22,7 +22,7 @@ loadConfig()
 local Window = Library:Window({
     Title = "Frxser Hub",
     Desc = "Frxser Hub on top",
-    Icon = 112372000395096,
+    Icon = 76337199092524,
     Theme = "Dark",
     Config = {
         Keybind = Enum.KeyCode.LeftControl,
