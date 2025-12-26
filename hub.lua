@@ -219,7 +219,16 @@ do
 			end
 		end
 		if type(i) == 'string' then
-			if i:find('rbxassetid://') or i:find('https://') or i:find('http://') then
+			if i:find('https://www.roblox.com/asset/') then
+				local id = i:match('id=(%d+)')
+				if id then
+					return {
+						Image = "rbxassetid://"..id,
+						ImageRectSize = Vector2.new(0, 0),
+						ImageRectPosition = Vector2.new(0, 0),
+					}
+				end
+			elseif i:find('rbxassetid://') or i:find('https://') or i:find('http://') then
 				return {
 					Image = i,
 					ImageRectSize = Vector2.new(0, 0),
