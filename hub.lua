@@ -1269,6 +1269,9 @@ function Library:Window(p)
 	Icon_1.BorderSizePixel = 0
 	Icon_1.Size = UDim2.new(0, 30,0, 30)
 	local iconData = gl(Icon)
+	print("DEBUG Icon:", Icon)
+	print("DEBUG iconData:", iconData)
+	print("DEBUG Image:", iconData.Image)
 	Icon_1.Image = iconData.Image
 	if iconData.ImageRectSize ~= Vector2.new(0, 0) then
 		Icon_1.ImageRectSize = iconData.ImageRectSize
