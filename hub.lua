@@ -158,7 +158,7 @@ local themes = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FrxserHub"
+ScreenGui.Name = "Dummy Kawaii"
 ScreenGui.Parent = not game:GetService("RunService"):IsStudio() and game:GetService("CoreGui") or game:GetService("Players").LocalPlayer.PlayerGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -205,7 +205,7 @@ do
 		end
 	end
 
-	local IconList = loadstring(game:HttpGet('https://raw.githubusercontent.com/XeFrostz/FHub-Lib/refs/heads/main/icon.lua'))()
+	local IconList = loadstring(game:HttpGet('https://raw.githubusercontent.com/Dummyrme/Library/refs/heads/main/Icon.lua'))()
 	function gl(i)
 		local iconData = IconList.Icons[i]
 		if iconData then
@@ -218,29 +218,12 @@ do
 				}
 			end
 		end
-		if type(i) == 'string' then
-			if i:find('https://www.roblox.com/asset/') then
-				local id = i:match('id=(%d+)')
-				if id then
-					return {
-						Image = "rbxassetid://"..id,
-						ImageRectSize = Vector2.new(0, 0),
-						ImageRectPosition = Vector2.new(0, 0),
-					}
-				end
-			elseif i:find('rbxassetid://') or i:find('https://') or i:find('http://') then
-				return {
-					Image = i,
-					ImageRectSize = Vector2.new(0, 0),
-					ImageRectPosition = Vector2.new(0, 0),
-				}
-			else
-				return {
-					Image = "rbxassetid://".. i,
-					ImageRectSize = Vector2.new(0, 0),
-					ImageRectPosition = Vector2.new(0, 0),
-				}
-			end
+		if type(i) == 'string' and not i:find('rbxassetid://') then
+			return {
+				Image = "rbxassetid://".. i,
+				ImageRectSize = Vector2.new(0, 0),
+				ImageRectPosition = Vector2.new(0, 0),
+			}
 		elseif type(i) == 'number' then
 			return {
 				Image = "rbxassetid://".. i,
@@ -1277,15 +1260,9 @@ function Library:Window(p)
 	Icon_1.BorderColor3 = Color3.fromRGB(0,0,0)
 	Icon_1.BorderSizePixel = 0
 	Icon_1.Size = UDim2.new(0, 30,0, 30)
-	local iconData = gl(Icon)
-	print("DEBUG Icon:", Icon)
-	print("DEBUG iconData:", iconData)
-	print("DEBUG Image:", iconData.Image)
-	Icon_1.Image = iconData.Image
-	if iconData.ImageRectSize ~= Vector2.new(0, 0) then
-		Icon_1.ImageRectSize = iconData.ImageRectSize
-		Icon_1.ImageRectOffset = iconData.ImageRectPosition
-	end
+	Icon_1.Image = gl(Icon).Image
+	Icon_1.ImageRectSize = gl(Icon).ImageRectSize
+	Icon_1.ImageRectOffset = gl(Icon).ImageRectPosition
 
 	addToTheme('Text & Icon', Icon_1)
 
@@ -4543,7 +4520,7 @@ function Library:Window(p)
 			if not firsttime then
 				firsttime = true
 				Tabs:Notify({
-					Title = 'Frxser Hub',
+					Title = 'Dummy Kawaii',
 					Desc = 'Press the <font color="#FF77A5" size="14">('..tostring(Keybind):gsub("Enum.KeyCode.", "")..')</font> button to hide and show the UI',
 					Time = 10
 				})
